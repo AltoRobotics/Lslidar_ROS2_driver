@@ -29,8 +29,8 @@ def generate_launch_description():
                                     parameters=[driver_dir],
                                     )
 
-    elif ros_version == b'foxy\n' or ros_version == b'galactic\n' or ros_version == b'humble\n':
-        print("ROS VERSION: foxy/galactic/humble")
+    elif ros_version == b'jazzy\n' or ros_version == b'galactic\n' or ros_version == b'humble\n':
+        print("ROS VERSION: jazzy/galactic/humble")
         driver_node = LifecycleNode(package='lslidar_driver',
                                     namespace='cx',
                                     executable='lslidar_driver_node',
