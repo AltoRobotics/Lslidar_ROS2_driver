@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import LifecycleNode
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
@@ -21,7 +20,7 @@ def generate_launch_description():
     #print(ros_version)
     if ros_version == b'dashing\n' or ros_version == b'eloquent\n':
         print("ROS VERSION: dashing/eloquent")
-        driver_node = LifecycleNode(package='lslidar_driver',
+        driver_node = Node(package='lslidar_driver',
                                     node_namespace='cx',
                                     node_executable='lslidar_driver_node',
                                     node_name='lslidar_driver_node',
@@ -31,7 +30,7 @@ def generate_launch_description():
 
     elif ros_version == b'jazzy\n' or ros_version == b'galactic\n' or ros_version == b'humble\n':
         print("ROS VERSION: jazzy/galactic/humble")
-        driver_node = LifecycleNode(package='lslidar_driver',
+        driver_node = Node(package='lslidar_driver',
                                     namespace='cx',
                                     executable='lslidar_driver_node',
                                     name='lslidar_driver_node',
