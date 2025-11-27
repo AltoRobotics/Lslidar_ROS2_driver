@@ -31,6 +31,7 @@ rosidl_generate_interfaces(lslidar_msgs
         "msg/LslidarPacket.msg"
         "msg/LslidarPoint.msg"
         "msg/LslidarScan.msg"
+        "msg/LslidarDiagnostic.msg"
         "srv/DataIp.srv"
         "srv/DataPort.srv"
         "srv/DestinationIp.srv"
