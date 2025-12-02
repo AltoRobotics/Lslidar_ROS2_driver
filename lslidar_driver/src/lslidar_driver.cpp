@@ -327,25 +327,15 @@ void LslidarDriver::parseDiagnosticData(
       (difop_packet->data[90] << 8) | difop_packet->data[91];
   plate3_humidity_ = (raw_humidity / 65535.0f) * 100.0f; // Result in %
 
-  // ===== VOLTAGE (Offset 84-87, 101-102) =====
-  // APD High Voltage: APD_Voltage = 281 - 0.0692142 * data (V)
-  uint16_t raw_apd_voltage =
-      (difop_packet->data[84] << 8) | difop_packet->data[85];
-  apd_high_voltage_ = 281.0f - 0.0692142f * raw_apd_voltage;
-
-  // LD Emitting High Voltage: LD_Voltage = (data / 4096) * 2.5 * 15.634146 (V)
-  uint16_t raw_ld_voltage =
-      (difop_packet->data[86] << 8) | difop_packet->data[87];
-  ld_high_voltage_ = (raw_ld_voltage / 4096.0f) * 2.5f * 15.634146f;
-
-  // Input Voltage Value: Use FIRST BYTE ONLY, Voltage = data / 10 (V)
-  uint8_t raw_input_voltage = difop_packet->data[101];
-  input_voltage_value = raw_input_voltage / 10.0f;
+  // Input Voltage Value: , Voltage = data / 10 (V)
+  uint16_t raw_input_voltage =
+      (difop_packet->data[101] << 8) | difop_packet->data[102];
+  input_voltage_value = raw_input_voltage * 0.1f;
 
   // ===== CURRENT (Offset 103) =====
-  // Input Current Value: Use FIRST BYTE ONLY, Current = data / 100 (A)
-  uint8_t raw_input_current = difop_packet->data[103];
-  input_current_value = raw_input_current / 100.0f;
+  uint16_t raw_input_current =
+      (difop_packet->data[103] << 8) | difop_packet->data[104];
+  input_current_value = raw_input_current * 0.01;
 
   // ===== STATUS FLAGS (Offset 92-95) =====
   gps_status_ = difop_packet->data[92];
@@ -380,8 +370,6 @@ void LslidarDriver::publishDiagnostics() {
   diag_msg.plate3_humidity = plate3_humidity_;
 
   // Voltage
-  diag_msg.apd_high_voltage = apd_high_voltage_;
-  diag_msg.ld_high_voltage = ld_high_voltage_;
   diag_msg.input_voltage = input_voltage_value;
 
   // Current

@@ -9,9 +9,7 @@ float32 apd_board_temperature
 float32 ld_board_temperature     
 float32 plate3_temperature       
 float32 plate3_humidity          
-
-float32 apd_high_voltage         
-float32 ld_high_voltage          
+       
 float32 input_voltage            
 
 float32 input_current            
