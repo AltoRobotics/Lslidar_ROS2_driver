@@ -2,8 +2,7 @@
 # All data extracted from offset positions in DIFOP packet
 
 std_msgs/Header header
-
-float32 pps_alignment_angle      
+ 
 float32 pps_alignment_error      
 
 float32 apd_board_temperature    

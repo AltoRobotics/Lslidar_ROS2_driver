@@ -295,57 +295,61 @@ bool LslidarDriver::initialize() {
 void LslidarDriver::parseDiagnosticData(
     const lslidar_msgs::msg::LslidarPacket::UniquePtr &difop_packet) {
 
-  // ===== PPS ALIGNMENT (Offset 46-49) =====
-  uint16_t raw_pps_angle =
-      (difop_packet->data[46] << 8) | difop_packet->data[47];
-
-  int16_t signed_pps_angle = static_cast<int16_t>(raw_pps_angle);
-  pps_alignment_angle_ = signed_pps_angle * 0.01f;
-
+  // ===== PPS ALIGNMENT (Offset 48-49) =====
   uint16_t raw_pps_error =
       (difop_packet->data[48] << 8) | difop_packet->data[49];
   int16_t signed_pps_error = static_cast<int16_t>(raw_pps_error);
   pps_alignment_error_ = signed_pps_error * 0.01f;
 
-  // ===== TEMPERATURE (Offset 80-91) =====
+  // ===== TEMPERATURE (Offset 80-89, 94-95) =====
+  // APD Board Temperature: Temperature = data * 0.061035 - 50 (°C)
   uint16_t raw_apd_temp =
       (difop_packet->data[80] << 8) | difop_packet->data[81];
-  int16_t signed_apd_temp = static_cast<int16_t>(raw_apd_temp);
-  apd_board_temperature_ = signed_apd_temp * 0.01f;
+  apd_board_temperature_ = raw_apd_temp * 0.061035f - 50.0f;
 
+  // LD Board Temperature: Temperature = data * 0.061035 - 50 (°C)
   uint16_t raw_ld_temp = (difop_packet->data[82] << 8) | difop_packet->data[83];
-  int16_t signed_ld_temp = static_cast<int16_t>(raw_ld_temp);
-  ld_board_temperature_ = signed_ld_temp * 0.01f;
+  ld_board_temperature_ = raw_ld_temp * 0.061035f - 50.0f;
 
+  // No. 3 Plate Temperature: Temperature = data * 0.061035 - 50 (°C)
   uint16_t raw_plate3_temp =
       (difop_packet->data[88] << 8) | difop_packet->data[89];
-  int16_t signed_plate3_temp = static_cast<int16_t>(raw_plate3_temp);
-  plate3_temperature_ = signed_plate3_temp * 0.01f;
+  plate3_temperature_ = raw_plate3_temp * 0.061035f - 50.0f;
 
+  // High Temperature Suspension: Temperature = data * 0.061035 - 50 (°C)
+  uint16_t raw_high_temp_susp =
+      (difop_packet->data[94] << 8) | difop_packet->data[95];
+  high_temp_suspension_ = raw_high_temp_susp * 0.061035f - 50.0f;
+
+  // ===== HUMIDITY (Offset 90-91) =====
+  // Humidity = data / 65535 (result is 0-1, multiply by 100 for %)
   uint16_t raw_humidity =
       (difop_packet->data[90] << 8) | difop_packet->data[91];
-  plate3_humidity_ = raw_humidity * 0.01f;
-
-  high_temp_suspension_ =
-      (difop_packet->data[94] << 8) | difop_packet->data[95];
+  plate3_humidity_ = (raw_humidity / 65535.0f) * 100.0f; // Result in %
 
   // ===== VOLTAGE (Offset 84-87, 101-102) =====
+  // APD High Voltage: APD_Voltage = 281 - 0.0692142 * data (V)
   uint16_t raw_apd_voltage =
       (difop_packet->data[84] << 8) | difop_packet->data[85];
-  apd_high_voltage_ = raw_apd_voltage * 0.01f;
+  apd_high_voltage_ = 281.0f - 0.0692142f * raw_apd_voltage;
 
+  // LD Emitting High Voltage: LD_Voltage = (data / 4096) * 2.5 * 15.634146 (V)
   uint16_t raw_ld_voltage =
       (difop_packet->data[86] << 8) | difop_packet->data[87];
-  ld_high_voltage_ = raw_ld_voltage * 0.01f;
+  ld_high_voltage_ = (raw_ld_voltage / 4096.0f) * 2.5f * 15.634146f;
 
-  uint16_t raw_input_voltage =
-      (difop_packet->data[101] << 8) | difop_packet->data[102];
-  input_voltage_value = raw_input_voltage * 0.01f;
+  // Input Voltage Value: Use FIRST BYTE ONLY, Voltage = data / 10 (V)
+  uint8_t raw_input_voltage = difop_packet->data[101];
+  input_voltage_value = raw_input_voltage / 10.0f;
 
-  // ===== CURRENT (Offset 103-104) =====
-  uint16_t raw_input_current =
-      (difop_packet->data[103] << 8) | difop_packet->data[104];
-  input_current_value = raw_input_current * 0.01f;
+  // ===== CURRENT (Offset 103) =====
+  // Input Current Value: Use FIRST BYTE ONLY, Current = data / 100 (A)
+  uint8_t raw_input_current = difop_packet->data[103];
+  input_current_value = raw_input_current / 100.0f;
+
+  // ===== STATUS FLAGS (Offset 92-95) =====
+  gps_status_ = difop_packet->data[92];
+  pps_status_ = difop_packet->data[93];
 
   // ===== STATUS FLAGS (Offset 92-95) =====
   gps_status_ = difop_packet->data[92];
@@ -367,7 +371,6 @@ void LslidarDriver::publishDiagnostics() {
   diag_msg.header.frame_id = frame_id;
 
   // PPS Alignment
-  diag_msg.pps_alignment_angle = pps_alignment_angle_;
   diag_msg.pps_alignment_error = pps_alignment_error_;
 
   // Temperature
